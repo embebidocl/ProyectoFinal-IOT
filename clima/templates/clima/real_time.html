@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Monitoreo en Tiempo Real</h2>
+
+    <!-- Tarjetas -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-header">Temperatura</div>
+                <div class="card-body">
+                    <h5 class="card-title" id="temperatura">-- °C</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-header">Humedad</div>
+                <div class="card-body">
+                    <h5 class="card-title" id="humedad">-- %</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-header">PPM</div>
+                <div class="card-body">
+                    <h5 class="card-title" id="ppm">--</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">Calidad</div>
+                <div class="card-body">
+                    <h5 class="card-title" id="calidad">--</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <canvas id="tempChart" height="100"></canvas>
+        </div>
+        <div class="col-md-12 mb-4">
+            <canvas id="humChart" height="100"></canvas>
+        </div>
+        <div class="col-md-12 mb-4">
+            <canvas id="ppmChart" height="100"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const tempLabel = document.getElementById('temperatura');
+    const humLabel = document.getElementById('humedad');
+    const ppmLabel = document.getElementById('ppm');
+    const calidadLabel = document.getElementById('calidad');
+
+    const tempData = { labels: [], datasets: [{ label: 'Temperatura (°C)', data: [], borderColor: 'red', tension: 0.3 }] };
+    const humData = { labels: [], datasets: [{ label: 'Humedad (%)', data: [], borderColor: 'blue', tension: 0.3 }] };
+    const ppmData = { labels: [], datasets: [{ label: 'Calidad Aire (ppm)', data: [], borderColor: 'green', tension: 0.3 }] };
+
+    const tempChart = new Chart(document.getElementById('tempChart'), {
+        type: 'line',
+        data: tempData,
+        options: {
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Tiempo'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Temperatura (°C)'
+                    }
+                }
+            }
+        }
+    });
+
+    const humChart = new Chart(document.getElementById('humChart'), {
+        type: 'line',
+        data: humData,
+        options: {
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Tiempo'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Humedad (%)'
+                    }
+                }
+            }
+        }
+    });
+
+    const ppmChart = new Chart(document.getElementById('ppmChart'), {
+        type: 'line',
+        data: ppmData,
+        options: {
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Tiempo'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Calidad Aire (ppm)'
+                    }
+                }
+            }
+        }
+    });
+
+    const socket = new WebSocket('ws://' + window.location.host + '/ws/data/');
+
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        const timestamp = new Date().toLocaleTimeString();
+
+        tempLabel.textContent = data.temperatura + " °C";
+        humLabel.textContent = data.humedad + " %";
+        ppmLabel.textContent = data.ppm;
+        calidadLabel.textContent = data.calidad;
+
+        tempData.labels.push(timestamp);
+        humData.labels.push(timestamp);
+        ppmData.labels.push(timestamp);
+
+        tempData.datasets[0].data.push(data.temperatura);
+        humData.datasets[0].data.push(data.humedad);
+        ppmData.datasets[0].data.push(data.ppm);
+
+        tempChart.update();
+        humChart.update();
+        ppmChart.update();
+    };
+
+    socket.onopen = () => console.log("Conectado a WebSocket");
+    socket.onerror = (error) => console.error("WebSocket Error:", error);
+</script>
+{% endblock %}
