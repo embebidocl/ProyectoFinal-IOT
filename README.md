@@ -1,5 +1,5 @@
 # **Proyecto Final**
-# **Matias Rivera Devia - Alexis Zamora Bernal**
+## **Matias Rivera Devia - Alexis Zamora Bernal**
 
 ## Requisitos
 
